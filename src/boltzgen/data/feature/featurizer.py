@@ -563,7 +563,7 @@ deletions_dict_type = types.DictType(types.UniTuple(types.int64, 3), types.int64
             types.int64,  # unk_token
         )
     ],
-    cache=True,
+    cache=False,
 )
 def _prepare_msa_arrays_inner(
     token_asym_ids: npt.NDArray[np.int64],
