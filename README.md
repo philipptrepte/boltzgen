@@ -8,84 +8,116 @@
  ![alt text](assets/cover.png)
 </div>
 
-# Installation
-In an environment with python >=3.11:
+# Installation on Trillium-GPU HPC (Digital Research Alliance of Canada)
+
+Summary of steps needed to install Boltzgen on Trillium-GPU (https://docs.alliancecan.ca/wiki/Trillium). \
+Since Anaconda is not supported on Trillium, we will install boltzgen in a python venv.
+Rdkit is preinstalled and can be loaded as a module and we install numpy<2, since Numpy 2.0.2 is not provided by the computecanada wheelhouse. \
+Environment variables for huggingface and triton are added to `$HOME/.bashrc` so that models and cache files are always saved to `$SCRATCH`
+
+### 1. Load Modules
 ```bash
-pip install boltzgen
+module --force purge
+module load StdEnv/2023
+module load python/3.11.5
+module load gcc/12.3
+module load cuda/12.2
+module load rdkit/2024.09.6
 ```
 
-<details>
-  <summary style="font-size: 1.3em; font-weight: 600;">
-    Click for detailed installation instructions
-  </summary>
-
-### 1 - Install Miniconda
-
-Choose the installer for your operating system, download it, and follow the on-screen prompts:
-
-* **Windows:** <https://www.anaconda.com/docs/getting-started/miniconda/install#windows-installation>
-* **macOS / Linux:** <https://www.anaconda.com/docs/getting-started/miniconda/install#macos-linux-installation>
-
-After installation, **open a terminal / command prompt** (you may need to search for “Anaconda Prompt” on Windows).
-
-### 2 - Create a Miniconda Python environment
-
-Run the command below in a terminal to create a fresh environment called `bg` with Python 3.12:
-
+### 2. Clone BoltzGen repo
 ```bash
-conda create -n bg python=3.12
+git clone git@github.com:philipptrepte/boltzgen.git
+```
+Changed dependencies
+- `numpy==2.0.2` > `numpy<2`
+- removed `rdkit`
+- `triton` added
+
+Deactivated numba caching in `boltzgen/src/boltzgen/data/feature/featurizer.py` by setting `@numba.njit(cache=False)`
+
+### 3. Create and activate venv
+```bash
+pip install --upgrade pip
+
+python -m venv $HOME/boltzgen/boltzgen_venv
+
+source "$HOME/boltzgen/boltzgen_venv/bin/activate"
 ```
 
-### 3 - Activate the environment (do this every time you work with BoltzGen)
-
-```bash
-conda activate bg
-```
-
-> If you open a **new** terminal session later, you must run `conda activate bg` again before using BoltzGen.
-
-### 4 - Install BoltzGen
-
-Run the command below to install BoltzGen from PyPI:
-
-```bash
-pip install boltzgen
-```
-
-Alternatively, if you prefer to install an editable, locally-managed copy, download the BoltzGen repository, change directory into the boltzgen directory, and install BoltzGen from source:
-
+### 4. Install and verify BoltzGen
 ```bash
 pip install -e .
 ```
-</details>
-
-<details>
-  <summary style="font-size: 1.3em; font-weight: 600;">
-    Click for optional Docker instructions if you prefer Docker
-  </summary>
-
-To build and run the docker image:
 
 ```bash
-# Build
-docker build -t boltzgen .
+boltzgen --help
+```
 
-# Run an example
-mkdir -p workdir  # output
-mkdir -p cache    # where models will be downloaded to
-docker run --rm --gpus all -v "$(realpath workdir)":/workdir -v "$(realpath cache)":/cache -v "$(realpath example)":/example \
-  boltzgen run /example/vanilla_protein/1g13prot.yaml --output /workdir/test \
+### 5. Add HF_HOME to .bashrc
+```bash
+echo 'export HF_HOME=$SCRATCH/.huggingface' >> $HOME/.bashrc
+
+echo 'export XDG_CACHE_HOME=/scratch/$USER/.cache' >> $HOME/.bashrc
+
+echo 'export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton' >> $HOME/.bashrc
+
+echo 'export CUEQUIV_TRITON_CACHE_DIR=$XDG_CACHE_HOME/cuequivariance-triton' >> $HOME/.bashrc
+
+source ~/.bashrc
+
+echo $HF_HOME $TRITON_CACHE_DIR $CUEQUIV_TRITON_CACHE_DIR
+
+mkdir -p "$HF_HOME" "$TRITON_CACHE_DIR" "$CUEQUIV_TRITON_CACHE_DIR"
+```
+
+### 6. Run boltzen test after installation to download models
+
+**_NOTE_: Debugjob and job nodes don't have access to the internet. The first time we run boltzgen, it will need to download models from huggingface. We therefore initialize it from a login node, even though it will report an error and predictions will not complete.**
+
+```bash
+boltzgen run example/vanilla_protein/1g13prot.yaml \
+  --output $SCRATCH/boltzgen/workbench/test_run \
   --protocol protein-anything \
-  --num_designs 2
+  --num_designs 2 \
+  --budget 1
 ```
 
-In the example above, the model weights are downloaded the first time the image is run. To bake the weights into the image at build time, run:
+### 7. Run a prediction from a  debugjob node
+After having downloaded the huggingface models in the previous step, run a prediction from a debugjob node to verify functionality and installation.
 
 ```bash
-docker build -t boltzgen:weights --build-arg DOWNLOAD_WEIGHTS=true .
+debugjob
 ```
-</details>
-<br>
+
+```bash
+module load StdEnv/2023
+module load python/3.11.5
+module load gcc/12.3
+module load cuda/12.2
+module load rdkit/2024.09.6
+source "$HOME/boltzgen/boltzgen_venv/bin/activate"
+
+export SLURM_NTASKS_PER_NODE=SLURM_GPUS_PER_NODE
+
+cd $HOME/boltzgen
+```
+```bash
+boltzgen run example/vanilla_protein/1g13prot.yaml \
+  --output $SCRATCH/boltzgen/workbench/test_run \
+  --protocol protein-anything \
+  --num_designs 2 \
+  --budget 1
+```
+
+### 8. Exit Debugjob when done and deactivate venv
+```bash
+exit
+```
+
+```bash
+deactivate
+```
 
 
 # Running BoltzGen
