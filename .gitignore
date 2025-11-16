@@ -16,6 +16,7 @@ small_data
 *.pkl
 *.out
 .DS_Store
+*venv/
 
 # Development files
 .vscode
