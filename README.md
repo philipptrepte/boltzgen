@@ -71,10 +71,15 @@ echo $HF_HOME $TRITON_CACHE_DIR $CUEQUIV_TRITON_CACHE_DIR
 mkdir -p "$HF_HOME" "$TRITON_CACHE_DIR" "$CUEQUIV_TRITON_CACHE_DIR"
 ```
 
-### 6. Run boltzen test after installation to download models
+### 6. Download models
 
-**_NOTE_: Debugjob and job nodes don't have access to the internet. The first time we run boltzgen, it will need to download models from huggingface. We therefore initialize it from a login node, even though it will report an error and predictions will not complete.**
+**_NOTE_: Debugjob and job nodes don't have access to the internet. Download all models using the `download` parameter.**
 
+```bash
+boltzgen download all --cache $HF_HOME
+```
+
+**Alternatively, the first time we run boltzgen, it will download models from huggingface. We therefore initialize it from a login node, even though it will report an error and predictions will not complete.**
 ```bash
 boltzgen run example/vanilla_protein/1g13prot.yaml \
   --output $SCRATCH/boltzgen/workbench/test_run \
