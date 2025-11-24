@@ -41,7 +41,7 @@ class Predict(Task):
         diffusion_samples: int = 1,
         keys_dict_out: Optional[List] = None,
         keys_dict_batch: Optional[List] = None,
-        slurm: bool = False,
+        slurm: bool = True,
         matmul_precision: Optional[str] = None,
         trainer: Optional[dict] = None,
         override: Optional[dict] = None,

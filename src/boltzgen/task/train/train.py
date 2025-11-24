@@ -30,7 +30,7 @@ class Training(Task):
         pretrained: Optional[str] = None,
         wandb: Optional[dict] = None,
         disable_checkpoint: bool = False,
-        slurm: bool = False,
+        slurm: bool = True,
         matmul_precision: Optional[str] = None,
         find_unused_parameters: Optional[bool] = False,
         ddp_timeout_seconds: Optional[int] = 6400,

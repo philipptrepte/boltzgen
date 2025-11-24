@@ -43,6 +43,7 @@ trainer:
 
 name: affinity_in_eval_affinity
 output: null
+slurm: true
 checkpoint: null
 matmul_precision: null
 recycling_steps: 3

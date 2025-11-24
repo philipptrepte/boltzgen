@@ -37,6 +37,7 @@ trainer:
 
 name: inverse_fold_only
 output: null
+slurm: true
 checkpoint: null
 matmul_precision: null
 recycling_steps: 3

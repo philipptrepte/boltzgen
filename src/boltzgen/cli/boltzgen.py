@@ -426,6 +426,13 @@ def build_configure_parser(subparsers) -> argparse.ArgumentParser:
         choices=step_names,
         help="Configure only the specified pipeline steps (default: all steps)",
     )
+    
+    group = configure_parser.add_argument_group("reuse existing results")
+    group.add_argument(
+        "--reuse",
+        action="store_true",
+        help="Reuse existing configuration.",
+    )
 
     add_configure_arguments(configure_parser, output_required=True)
     add_models_download_options(configure_parser)

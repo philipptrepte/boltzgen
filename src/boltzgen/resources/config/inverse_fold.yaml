@@ -48,6 +48,7 @@ trainer:
 
 name: if_full
 output: null
+slurm: true
 checkpoint: null
 matmul_precision: null
 recycling_steps: 3
